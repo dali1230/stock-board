@@ -1,584 +1,764 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="light">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>我的工作台</title>
-<meta name="description" content="个人工作导航 · 股票 · 电商 · 内容 · AI 工具一站直达">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>A股自选股与持仓看板</title>
 <style>
   :root {
-    --bg: #f4f6fb;
-    --bg-soft: #eaeef7;
-    --card: #ffffff;
-    --text: #1a2233;
-    --text-dim: #6b7690;
-    --line: #e3e8f2;
+    --bg: #f5f6f8;
+    --panel: #ffffff;
+    --panel-2: #fafbfc;
+    --border: #e6e8ec;
+    --text: #1a1d24;
+    --text-2: #6b7280;
+    --text-3: #9aa1ad;
+    --up: #e5342b;
+    --down: #12a150;
+    --flat: #8b93a1;
     --accent: #2f6bff;
     --accent-soft: #eaf0ff;
-    --shadow: 0 1px 2px rgba(23,35,66,.04), 0 8px 24px -12px rgba(23,35,66,.14);
-    --shadow-hover: 0 2px 6px rgba(23,35,66,.06), 0 18px 40px -16px rgba(23,35,66,.22);
-    --radius: 16px;
+    --shadow: 0 1px 2px rgba(16,24,40,.04), 0 8px 24px rgba(16,24,40,.06);
+    --radius: 14px;
   }
-  [data-theme="dark"] {
-    --bg: #0e121b;
-    --bg-soft: #161c28;
-    --card: #171e2b;
-    --text: #e8edf7;
-    --text-dim: #8b96ad;
-    --line: #232c3d;
+  html[data-theme="dark"] {
+    --bg: #0f1218;
+    --panel: #171b23;
+    --panel-2: #1c212b;
+    --border: #262c38;
+    --text: #e8ecf3;
+    --text-2: #9aa4b5;
+    --text-3: #6b7686;
+    --up: #ff5c52;
+    --down: #22c06a;
+    --flat: #7d8798;
     --accent: #4d84ff;
-    --accent-soft: #1b2740;
-    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
-    --shadow-hover: 0 2px 6px rgba(0,0,0,.35), 0 18px 40px -16px rgba(0,0,0,.6);
+    --accent-soft: #1b2540;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html { -webkit-text-size-adjust: 100%; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
   body {
     background: var(--bg);
     color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-    line-height: 1.6;
-    min-height: 100vh;
-    padding: 0 20px 80px;
-    transition: background .3s ease, color .3s ease;
-  }
-  body::before {
-    content: "";
-    position: fixed;
-    top: -320px; left: 50%;
-    width: 780px; height: 620px;
-    transform: translateX(-50%);
-    background: radial-gradient(circle, rgba(47,107,255,.13), rgba(47,107,255,0) 68%);
-    pointer-events: none;
-    z-index: 0;
-  }
-  .wrap { position: relative; z-index: 1; max-width: 1160px; margin: 0 auto; }
-
-  /* ---------- 顶部 ---------- */
-  header { padding: 56px 0 30px; }
-  .topbar { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
-  .greet h1 {
-    font-size: clamp(24px, 3.4vw, 33px);
-    font-weight: 700;
-    letter-spacing: -.6px;
-    line-height: 1.25;
-  }
-  .greet h1 .hi { background: linear-gradient(100deg, #2f6bff, #7a5cff 60%, #ff6b9d); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .greet p { color: var(--text-dim); font-size: 14px; margin-top: 6px; }
-  .actions { display: flex; gap: 8px; flex-shrink: 0; }
-  .icon-btn {
-    width: 40px; height: 40px;
-    display: grid; place-items: center;
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    cursor: pointer;
-    font-size: 17px;
-    color: var(--text);
-    box-shadow: var(--shadow);
-    transition: transform .18s, box-shadow .18s, border-color .18s;
-  }
-  .icon-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); border-color: var(--accent); }
-  .icon-btn.on { background: var(--accent); border-color: var(--accent); color: #fff; }
-
-  /* ---------- 搜索 ---------- */
-  .search {
-    margin-top: 26px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    padding: 8px 8px 8px 16px;
-    box-shadow: var(--shadow);
-    transition: box-shadow .2s, border-color .2s;
-  }
-  .search:focus-within { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft), var(--shadow); }
-  .search .mag { font-size: 15px; opacity: .5; }
-  .search input {
-    flex: 1; min-width: 0;
-    border: none; outline: none; background: transparent;
-    font-size: 15px; color: var(--text);
-    font-family: inherit;
-    padding: 6px 0;
-  }
-  .search input::placeholder { color: var(--text-dim); }
-  .search select {
-    border: 1px solid var(--line);
-    background: var(--bg-soft);
-    color: var(--text-dim);
-    border-radius: 9px;
-    padding: 7px 10px;
-    font-size: 13px;
-    font-family: inherit;
-    cursor: pointer;
-    outline: none;
-  }
-  .search button {
-    border: none;
-    background: var(--accent);
-    color: #fff;
-    border-radius: 10px;
-    padding: 9px 20px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", sans-serif;
     font-size: 14px;
-    font-weight: 600;
-    font-family: inherit;
-    cursor: pointer;
-    transition: opacity .18s, transform .18s;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    transition: background .2s, color .2s;
   }
-  .search button:hover { opacity: .9; transform: translateY(-1px); }
+  .app { max-width: 1180px; margin: 0 auto; padding: 22px 20px 60px; }
 
-  /* ---------- 分组 ---------- */
-  .group { margin-top: 38px; animation: rise .5s cubic-bezier(.2,.7,.3,1) backwards; }
-  @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
-  .group-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
-  .group-head h2 { font-size: 15px; font-weight: 650; letter-spacing: .2px; }
-  .group-head .bar { width: 3px; height: 15px; border-radius: 2px; background: var(--accent); }
-  .group-head .count { font-size: 12px; color: var(--text-dim); background: var(--bg-soft); border-radius: 20px; padding: 1px 9px; }
+  /* ---------- 头部 ---------- */
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 14px; flex-wrap: wrap; margin-bottom: 20px;
+  }
+  .brand { display: flex; align-items: baseline; gap: 10px; }
+  .brand h1 { font-size: 19px; font-weight: 650; margin: 0; letter-spacing: -.2px; }
+  .brand .sub { font-size: 12px; color: var(--text-3); }
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  button {
+    font-family: inherit; font-size: 13px; cursor: pointer;
+    border: 1px solid var(--border); background: var(--panel); color: var(--text);
+    padding: 7px 13px; border-radius: 9px; transition: all .15s;
+    display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+  }
+  button:hover { border-color: var(--accent); color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.primary:hover { filter: brightness(1.08); color: #fff; }
+  button.ghost { background: transparent; }
+  button.icon { padding: 7px 10px; }
 
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(232px, 1fr));
-    gap: 12px;
+  /* ---------- 汇总卡片 ---------- */
+  .summary {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 14px;
   }
   .card {
-    position: relative;
-    display: flex; align-items: center; gap: 13px;
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    padding: 14px 15px;
-    text-decoration: none;
-    color: inherit;
-    box-shadow: var(--shadow);
-    transition: transform .2s cubic-bezier(.2,.7,.3,1), box-shadow .2s, border-color .2s;
-    overflow: hidden;
+    background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 15px 16px; box-shadow: var(--shadow);
   }
-  .card::after {
-    content: "";
-    position: absolute; inset: 0;
-    background: linear-gradient(120deg, transparent 40%, rgba(47,107,255,.07));
-    opacity: 0;
-    transition: opacity .25s;
-  }
-  .card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); border-color: rgba(47,107,255,.35); }
-  .card:hover::after { opacity: 1; }
-  .card .ico {
-    width: 40px; height: 40px; flex-shrink: 0;
-    display: grid; place-items: center;
-    border-radius: 11px;
-    font-size: 19px;
-    background: var(--accent-soft);
-  }
-  .card .txt { min-width: 0; flex: 1; }
-  .card .name {
-    font-size: 14.5px; font-weight: 600;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  .card .desc {
-    font-size: 12px; color: var(--text-dim);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    margin-top: 1px;
-  }
-  .card .del {
-    display: none;
-    position: absolute; top: 6px; right: 6px;
-    width: 22px; height: 22px;
-    border: none; border-radius: 50%;
-    background: #ff4d4f; color: #fff;
-    font-size: 13px; line-height: 1;
-    cursor: pointer;
-    z-index: 2;
-  }
-  body.editing .card .del { display: grid; place-items: center; }
-  body.editing .card { cursor: default; }
+  .card .label { font-size: 12px; color: var(--text-2); margin-bottom: 6px; display: flex; align-items: center; gap: 5px; }
+  .card .value { font-size: 22px; font-weight: 640; letter-spacing: -.4px; font-variant-numeric: tabular-nums; }
+  .card .hint { font-size: 11.5px; color: var(--text-3); margin-top: 5px; }
 
-  .add-card {
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-    border: 1.5px dashed var(--line);
-    border-radius: var(--radius);
-    background: transparent;
-    color: var(--text-dim);
-    font-size: 14px;
-    font-family: inherit;
-    min-height: 70px;
-    cursor: pointer;
-    transition: border-color .2s, color .2s, background .2s;
+  /* ---------- 主体两栏 ---------- */
+  .main {
+    display: grid; grid-template-columns: 1fr 300px; gap: 14px; align-items: start;
   }
-  .add-card:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
-  body:not(.editing) .add-card { display: none; }
+  .panel {
+    background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: var(--shadow); overflow: hidden;
+  }
+  .panel-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 13px 16px; border-bottom: 1px solid var(--border); gap: 10px;
+  }
+  .panel-head h2 { font-size: 13.5px; font-weight: 620; margin: 0; }
+  .panel-head .meta { font-size: 11.5px; color: var(--text-3); }
 
-  footer {
-    margin-top: 56px;
-    text-align: center;
-    font-size: 12.5px;
-    color: var(--text-dim);
+  /* ---------- 表格 ---------- */
+  .table-scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; min-width: 780px; }
+  thead th {
+    font-size: 11.5px; font-weight: 500; color: var(--text-2); text-align: right;
+    padding: 10px 12px; background: var(--panel-2); border-bottom: 1px solid var(--border);
+    white-space: nowrap; position: sticky; top: 0; z-index: 1;
   }
-  footer .dot { opacity: .5; margin: 0 8px; }
+  thead th:first-child { text-align: left; }
+  thead th:last-child { text-align: center; width: 84px; }
+  tbody td { padding: 11px 12px; text-align: right; border-bottom: 1px solid var(--border); font-size: 13.5px; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: var(--panel-2); }
+  .name-cell { text-align: left !important; }
+  .name-cell .nm { font-weight: 560; }
+  .name-cell .cd { font-size: 11.5px; color: var(--text-3); margin-top: 1px; }
+  .up { color: var(--up); }
+  .down { color: var(--down); }
+  .flat { color: var(--flat); }
+  .pill {
+    display: inline-block; min-width: 66px; padding: 3px 8px; border-radius: 7px;
+    font-size: 12.5px; font-weight: 560; text-align: center;
+  }
+  .pill.up { background: rgba(229,52,43,.1); }
+  .pill.down { background: rgba(18,161,80,.1); }
+  .pill.flat { background: rgba(139,147,161,.12); }
+  html[data-theme="dark"] .pill.up { background: rgba(255,92,82,.14); }
+  html[data-theme="dark"] .pill.down { background: rgba(34,192,106,.14); }
+  .row-actions { text-align: center; }
+  .row-actions button { padding: 4px 9px; font-size: 12px; border-radius: 7px; }
+  .row-actions .del:hover { border-color: var(--up); color: var(--up); }
+  .empty { padding: 46px 20px; text-align: center; color: var(--text-3); font-size: 13px; }
+  .empty .big { font-size: 30px; margin-bottom: 8px; opacity: .6; }
+
+  /* ---------- 侧栏 ---------- */
+  .side { display: flex; flex-direction: column; gap: 14px; }
+  .donut-wrap { padding: 16px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .donut-center { font-size: 11.5px; fill: var(--text-2); }
+  .legend { width: 100%; display: flex; flex-direction: column; gap: 7px; }
+  .legend-row { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
+  .dot { width: 9px; height: 9px; border-radius: 3px; flex: none; }
+  .legend-row .lg-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .legend-row .lg-pct { color: var(--text-2); font-variant-numeric: tabular-nums; }
+
+  .rank { padding: 6px 0; }
+  .rank-row { display: flex; align-items: center; gap: 10px; padding: 7px 16px; font-size: 12.5px; }
+  .rank-row .rk-name { width: 74px; flex: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rank-bar { flex: 1; height: 7px; background: var(--panel-2); border-radius: 4px; overflow: hidden; }
+  .rank-bar i { display: block; height: 100%; border-radius: 4px; }
+  .rank-row .rk-val { width: 68px; text-align: right; font-variant-numeric: tabular-nums; }
 
   /* ---------- 弹窗 ---------- */
-  .modal {
-    position: fixed; inset: 0;
-    background: rgba(15,22,36,.5);
-    backdrop-filter: blur(4px);
-    display: none;
-    place-items: center;
-    padding: 20px;
-    z-index: 50;
+  dialog {
+    border: none; border-radius: 16px; padding: 0; width: min(440px, calc(100vw - 32px));
+    background: var(--panel); color: var(--text); box-shadow: 0 24px 60px rgba(0,0,0,.24);
   }
-  .modal.show { display: grid; }
-  .modal-box {
-    width: 100%; max-width: 420px;
-    background: var(--card);
-    border-radius: 20px;
-    padding: 24px;
-    box-shadow: 0 30px 70px -20px rgba(0,0,0,.45);
-    animation: pop .25s cubic-bezier(.2,.7,.3,1);
+  dialog::backdrop { background: rgba(15,18,24,.45); backdrop-filter: blur(2px); }
+  .dlg-head { padding: 18px 20px 12px; font-size: 15px; font-weight: 620; }
+  .dlg-body { padding: 0 20px 4px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field.full { grid-column: 1 / -1; }
+  .field label { font-size: 12px; color: var(--text-2); }
+  .field input {
+    font-family: inherit; font-size: 13.5px; padding: 8px 10px; border-radius: 9px;
+    border: 1px solid var(--border); background: var(--panel-2); color: var(--text); outline: none;
+    transition: border-color .15s, box-shadow .15s; width: 100%;
   }
-  @keyframes pop { from { opacity: 0; transform: scale(.94) translateY(8px); } to { opacity: 1; transform: none; } }
-  .modal-box h3 { font-size: 17px; margin-bottom: 18px; }
-  .field { margin-bottom: 13px; }
-  .field label { display: block; font-size: 12.5px; color: var(--text-dim); margin-bottom: 5px; }
-  .field input, .field select {
-    width: 100%;
-    border: 1px solid var(--line);
-    background: var(--bg);
-    color: var(--text);
-    border-radius: 10px;
-    padding: 10px 12px;
-    font-size: 14px;
-    font-family: inherit;
-    outline: none;
-    transition: border-color .18s, box-shadow .18s;
-  }
-  .field input:focus, .field select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-  .modal-foot { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
-  .btn {
-    border: none; border-radius: 10px;
-    padding: 10px 18px;
-    font-size: 14px; font-weight: 600;
-    font-family: inherit; cursor: pointer;
-    transition: opacity .18s, transform .18s;
-  }
-  .btn:hover { opacity: .88; transform: translateY(-1px); }
-  .btn.ghost { background: var(--bg-soft); color: var(--text-dim); }
-  .btn.primary { background: var(--accent); color: #fff; }
+  .field input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .field .tip { font-size: 11px; color: var(--text-3); }
+  .dlg-foot { display: flex; justify-content: flex-end; gap: 9px; padding: 16px 20px 18px; }
 
-  @media (max-width: 640px) {
-    body { padding: 0 14px 60px; }
-    header { padding: 34px 0 20px; }
-    .grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
-    .card { flex-direction: column; align-items: flex-start; gap: 9px; padding: 13px; }
-    .card .ico { width: 34px; height: 34px; font-size: 17px; }
-    .search button { padding: 9px 14px; }
-    .search select { display: none; }
+  /* ---------- 提示 ---------- */
+  .toast {
+    position: fixed; left: 50%; bottom: 30px; transform: translate(-50%, 14px);
+    background: #1f2530; color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 13px;
+    opacity: 0; pointer-events: none; transition: all .22s; z-index: 99; max-width: 90vw;
+    box-shadow: 0 10px 30px rgba(0,0,0,.2);
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  @media (max-width: 900px) {
+    .summary { grid-template-columns: repeat(2, 1fr); }
+    .main { grid-template-columns: 1fr; }
+    .side { order: 2; }
+    .card .value { font-size: 19px; }
+  }
+  @media (max-width: 520px) {
+    .app { padding: 16px 12px 50px; }
+    .brand h1 { font-size: 17px; }
+    .toolbar button span.tx { display: none; }
   }
 </style>
 </head>
 <body>
-<div class="wrap">
+<div class="app">
   <header>
-    <div class="topbar">
-      <div class="greet">
-        <h1><span class="hi">你好</span>，今天想做点什么？</h1>
-        <p id="clock">正在加载时间…</p>
-      </div>
-      <div class="actions">
-        <button class="icon-btn" id="themeBtn" title="切换深浅色">🌙</button>
-        <button class="icon-btn" id="editBtn" title="编辑模式：增删快捷方式">✏️</button>
-      </div>
+    <div class="brand">
+      <h1>📈 A股自选与持仓</h1>
+      <span class="sub" id="lastRefresh">尚未拉取行情</span>
     </div>
-
-    <form class="search" id="searchForm">
-      <span class="mag">🔍</span>
-      <input id="q" type="text" placeholder="搜索或直接输入网址…" autocomplete="off">
-      <select id="engine">
-        <option value="https://www.baidu.com/s?wd=">百度</option>
-        <option value="https://www.bing.com/search?q=">必应</option>
-        <option value="https://www.google.com/search?q=">Google</option>
-      </select>
-      <button type="submit">搜索</button>
-    </form>
+    <div class="toolbar">
+      <button class="primary" id="btnRefresh" title="尝试从行情接口拉取最新价格">🔄 <span class="tx">刷新行情</span></button>
+      <button id="btnAdd">＋ <span class="tx">添加股票</span></button>
+      <button class="ghost icon" id="btnExport" title="导出数据备份">⬇</button>
+      <button class="ghost icon" id="btnImport" title="导入数据备份">⬆</button>
+      <button class="ghost icon" id="btnTheme" title="切换深浅色">🌙</button>
+    </div>
   </header>
 
-  <main id="app"></main>
+  <section class="summary">
+    <div class="card">
+      <div class="label">持仓总市值</div>
+      <div class="value" id="sMv">¥0.00</div>
+      <div class="hint" id="sMvHint">共 0 只</div>
+    </div>
+    <div class="card">
+      <div class="label">累计浮动盈亏</div>
+      <div class="value" id="sPnl">¥0.00</div>
+      <div class="hint" id="sPnlPct">—</div>
+    </div>
+    <div class="card">
+      <div class="label">今日盈亏</div>
+      <div class="value" id="sToday">¥0.00</div>
+      <div class="hint" id="sTodayPct">—</div>
+    </div>
+    <div class="card">
+      <div class="label">持仓成本</div>
+      <div class="value" id="sCost">¥0.00</div>
+      <div class="hint">按成本价 × 数量累计</div>
+    </div>
+  </section>
 
-  <footer>
-    <span>个人工作台</span><span class="dot">·</span><span>数据保存在本机浏览器</span><span class="dot">·</span><span id="stat"></span>
-  </footer>
-</div>
+  <div class="main">
+    <div class="panel">
+      <div class="panel-head">
+        <h2>自选列表</h2>
+        <span class="meta" id="tableMeta">点击任意行可编辑价格、成本与数量</span>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>名称 / 代码</th>
+              <th>现价</th>
+              <th>涨跌幅</th>
+              <th>持仓</th>
+              <th>成本价</th>
+              <th>市值</th>
+              <th>浮动盈亏</th>
+              <th>盈亏率</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
 
-<!-- 添加弹窗 -->
-<div class="modal" id="modal">
-  <div class="modal-box">
-    <h3>添加快捷方式</h3>
-    <div class="field">
-      <label>名称</label>
-      <input id="fName" type="text" placeholder="例如：巨量千川">
-    </div>
-    <div class="field">
-      <label>网址</label>
-      <input id="fUrl" type="text" placeholder="https://">
-    </div>
-    <div class="field">
-      <label>分组</label>
-      <select id="fGroup"></select>
-    </div>
-    <div class="field">
-      <label>图标（emoji，可留空）</label>
-      <input id="fIcon" type="text" placeholder="📌" maxlength="4">
-    </div>
-    <div class="modal-foot">
-      <button class="btn ghost" id="cancelBtn">取消</button>
-      <button class="btn primary" id="saveBtn">保存</button>
+    <div class="side">
+      <div class="panel">
+        <div class="panel-head"><h2>仓位分布</h2><span class="meta">Top 5</span></div>
+        <div class="donut-wrap">
+          <svg id="donut" width="160" height="160" viewBox="0 0 160 160"></svg>
+          <div class="legend" id="legend"></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>今日涨跌</h2><span class="meta">按持仓市值加权</span></div>
+        <div class="rank" id="rank"></div>
+      </div>
     </div>
   </div>
 </div>
 
+<dialog id="dlg">
+  <form method="dialog" id="dlgForm">
+    <div class="dlg-head" id="dlgTitle">添加股票</div>
+    <div class="dlg-body">
+      <div class="field">
+        <label for="fCode">股票代码</label>
+        <input id="fCode" placeholder="600519" autocomplete="off" required pattern="\d{6}" maxlength="6" />
+      </div>
+      <div class="field">
+        <label for="fName">股票名称</label>
+        <input id="fName" placeholder="贵州茅台" autocomplete="off" />
+      </div>
+      <div class="field">
+        <label for="fPrice">现价（元）</label>
+        <input id="fPrice" type="number" step="0.001" min="0" placeholder="0.000" />
+      </div>
+      <div class="field">
+        <label for="fPrev">昨收（元）</label>
+        <input id="fPrev" type="number" step="0.001" min="0" placeholder="用于算涨跌幅" />
+      </div>
+      <div class="field">
+        <label for="fCost">成本价（元）</label>
+        <input id="fCost" type="number" step="0.001" min="0" placeholder="不持仓可留空" />
+      </div>
+      <div class="field">
+        <label for="fQty">持仓数量（股）</label>
+        <input id="fQty" type="number" step="1" min="0" placeholder="不持仓可留空" />
+      </div>
+      <div class="field full" id="delWrap" style="display:none">
+        <button type="button" class="ghost" id="btnDeleteRow" style="justify-self:start;border-color:var(--up);color:var(--up)">删除这只股票</button>
+      </div>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="ghost" id="btnCancel">取消</button>
+      <button type="submit" class="primary" id="btnSave">保存</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast"></div>
+<input type="file" id="fileInput" accept="application/json,.json" style="display:none" />
+
 <script>
-/* ============ 默认数据 ============ */
-const DEFAULT_DATA = [
-  {
-    name: "📈 股票投资",
-    items: [
-      { name: "同花顺", desc: "行情与自选股", icon: "📊", color: "#e8452c", url: "https://www.10jqka.com.cn" },
-      { name: "东方财富", desc: "财经资讯与数据", icon: "📈", color: "#e8562c", url: "https://www.eastmoney.com" },
-      { name: "雪球", desc: "投资社区与组合", icon: "❄️", color: "#1f8cff", url: "https://xueqiu.com" },
-      { name: "腾讯自选股", desc: "自选股实时提醒", icon: "🐧", color: "#0e7dff", url: "https://wzq.tencent.com" },
-      { name: "上交所", desc: "公告与数据", icon: "🏛️", color: "#c0392b", url: "https://www.sse.com.cn" },
-      { name: "深交所", desc: "上市公司信息", icon: "🏦", color: "#2c3e50", url: "https://www.szse.cn" }
-    ]
-  },
-  {
-    name: "🛒 电商运营",
-    items: [
-      { name: "巨量千川", desc: "抖音广告投放", icon: "🚀", color: "#ff2d55", url: "https://qianchuan.jinritemai.com" },
-      { name: "抖店", desc: "抖音小店后台", icon: "🛍️", color: "#fe2c55", url: "https://fxg.jinritemai.com" },
-      { name: "小红书", desc: "内容种草与店铺", icon: "📕", color: "#ff2442", url: "https://www.xiaohongshu.com" },
-      { name: "拼多多商家", desc: "商家管理后台", icon: "🧧", color: "#e02e24", url: "https://mms.pinduoduo.com" },
-      { name: "千牛", desc: "淘宝天猫商家", icon: "🐮", color: "#ff5000", url: "https://qn.taobao.com" },
-      { name: "微信小店", desc: "视频号带货", icon: "🎁", color: "#07c160", url: "https://store.weixin.qq.com" }
-    ]
-  },
-  {
-    name: "🎬 内容创作",
-    items: [
-      { name: "抖音创作中心", desc: "作品与数据分析", icon: "🎵", color: "#161823", url: "https://creator.douyin.com" },
-      { name: "视频号助手", desc: "视频号发布管理", icon: "📺", color: "#07c160", url: "https://channels.weixin.qq.com" },
-      { name: "小红书创作中心", desc: "笔记发布与数据", icon: "✍️", color: "#ff2442", url: "https://creator.xiaohongshu.com" },
-      { name: "剪映", desc: "视频剪辑", icon: "✂️", color: "#0b0b0f", url: "https://www.capcut.cn" },
-      { name: "即梦", desc: "AI 图片与视频生成", icon: "🎨", color: "#7a5cff", url: "https://jimeng.jianying.com" },
-      { name: "Canva 可画", desc: "海报与封面设计", icon: "🖌️", color: "#00c4cc", url: "https://www.canva.cn" }
-    ]
-  },
-  {
-    name: "🤖 AI 工具",
-    items: [
-      { name: "WorkBuddy", desc: "AI 工作台", icon: "💼", color: "#2f6bff", url: "https://www.workbuddy.cn" },
-      { name: "DeepSeek", desc: "深度求索对话", icon: "🐋", color: "#4d6bfe", url: "https://chat.deepseek.com" },
-      { name: "豆包", desc: "字节 AI 助手", icon: "🫘", color: "#3b82f6", url: "https://www.doubao.com" },
-      { name: "Kimi", desc: "长文本分析", icon: "🌙", color: "#1a1a2e", url: "https://kimi.moonshot.cn" },
-      { name: "通义千问", desc: "阿里 AI 助手", icon: "☁️", color: "#615ced", url: "https://tongyi.aliyun.com" },
-      { name: "秘塔搜索", desc: "AI 搜索与整理", icon: "🔭", color: "#0f766e", url: "https://metaso.cn" }
-    ]
-  },
-  {
-    name: "📁 常用办公",
-    items: [
-      { name: "WPS 云文档", desc: "文档表格协作", icon: "📄", color: "#e74c3c", url: "https://www.kdocs.cn" },
-      { name: "腾讯文档", desc: "在线协作文档", icon: "📝", color: "#2f6bff", url: "https://docs.qq.com" },
-      { name: "百度网盘", desc: "文件存储与分享", icon: "☁️", color: "#06a7ff", url: "https://pan.baidu.com" },
-      { name: "QQ 邮箱", desc: "收发邮件", icon: "✉️", color: "#12b7f5", url: "https://mail.qq.com" },
-      { name: "阿里云盘", desc: "大文件云存储", icon: "🗄️", color: "#6b5bff", url: "https://www.alipan.com" },
-      { name: "GitHub", desc: "代码仓库", icon: "🐙", color: "#24292f", url: "https://github.com" }
-    ]
+(function () {
+  'use strict';
+
+  var STORE_KEY = 'astock_board_v1';
+  var COLORS = ['#2f6bff', '#e5342b', '#f5a524', '#12a150', '#8b5cf6', '#0ea5e9', '#ec4899', '#64748b'];
+
+  /* ---------- 状态 ---------- */
+  var state = {
+    items: [],
+    theme: 'light',
+    lastRefresh: null
+  };
+  var editingCode = null;
+
+  var DEMO = [
+    { code: '600519', name: '贵州茅台', price: 1523.00, prevClose: 1510.50, cost: 1480.00, qty: 200 },
+    { code: '300750', name: '宁德时代', price: 186.35,  prevClose: 190.20,  cost: 195.00, qty: 800 },
+    { code: '002594', name: '比亚迪',   price: 268.40,  prevClose: 265.10,  cost: 250.00, qty: 500 },
+    { code: '600036', name: '招商银行', price: 38.62,   prevClose: 38.30,   cost: 35.20,  qty: 3000 },
+    { code: '300308', name: '中际旭创', price: 142.80,  prevClose: 138.90,  cost: 130.00, qty: 600 }
+  ];
+
+  /* ---------- 工具 ---------- */
+  function $(id) { return document.getElementById(id); }
+  function fmtMoney(n, digits) {
+    if (!isFinite(n)) return '—';
+    var d = digits == null ? 2 : digits;
+    return '¥' + n.toLocaleString('zh-CN', { minimumFractionDigits: d, maximumFractionDigits: d });
   }
-];
+  function fmtNum(n, digits) {
+    if (!isFinite(n)) return '—';
+    var d = digits == null ? 2 : digits;
+    return n.toLocaleString('zh-CN', { minimumFractionDigits: d, maximumFractionDigits: d });
+  }
+  function fmtSigned(n, digits) {
+    if (!isFinite(n)) return '—';
+    var s = n > 0 ? '+' : '';
+    return s + fmtNum(n, digits);
+  }
+  function fmtPct(n) {
+    if (!isFinite(n)) return '—';
+    return (n > 0 ? '+' : '') + n.toFixed(2) + '%';
+  }
+  function cls(n) { return n > 0 ? 'up' : (n < 0 ? 'down' : 'flat'); }
+  function num(v) { var n = parseFloat(v); return isFinite(n) ? n : 0; }
 
-/* ============ 状态 ============ */
-const STORE_KEY = "worknav.data.v1";
-const THEME_KEY = "worknav.theme";
+  function toast(msg) {
+    var el = $('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(el._t);
+    el._t = setTimeout(function () { el.classList.remove('show'); }, 2600);
+  }
 
-function loadData() {
-  try {
-    const raw = localStorage.getItem(STORE_KEY);
-    if (!raw) return structuredClone(DEFAULT_DATA);
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.length) return parsed;
-  } catch (e) {}
-  return structuredClone(DEFAULT_DATA);
-}
-function saveData() { localStorage.setItem(STORE_KEY, JSON.stringify(data)); }
+  /* ---------- 存储 ---------- */
+  function save() {
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify({
+        items: state.items, theme: state.theme, lastRefresh: state.lastRefresh
+      }));
+    } catch (e) { /* 隐私模式下忽略 */ }
+  }
+  function load() {
+    var raw = null;
+    try { raw = localStorage.getItem(STORE_KEY); } catch (e) { }
+    if (raw) {
+      try {
+        var d = JSON.parse(raw);
+        if (d && Array.isArray(d.items)) {
+          state.items = d.items;
+          state.theme = d.theme === 'dark' ? 'dark' : 'light';
+          state.lastRefresh = d.lastRefresh || null;
+          return;
+        }
+      } catch (e) { }
+    }
+    state.items = DEMO.slice();
+    save();
+  }
 
-let data = loadData();
-let editing = false;
-
-/* ============ 渲染 ============ */
-function hexToRgba(hex, a) {
-  if (!/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(hex || "")) return `rgba(47,107,255,${a})`;
-  let h = hex.slice(1);
-  if (h.length === 3) h = h.split("").map(c => c + c).join("");
-  const n = parseInt(h, 16);
-  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
-}
-
-function render() {
-  const app = document.getElementById("app");
-  app.innerHTML = "";
-  let total = 0;
-
-  data.forEach((group, gi) => {
-    const sec = document.createElement("section");
-    sec.className = "group";
-    sec.style.animationDelay = `${gi * 55}ms`;
-
-    const head = document.createElement("div");
-    head.className = "group-head";
-    head.innerHTML = `<span class="bar"></span><h2>${escapeHtml(group.name)}</h2><span class="count">${group.items.length}</span>`;
-    sec.appendChild(head);
-
-    const grid = document.createElement("div");
-    grid.className = "grid";
-
-    group.items.forEach((item, ii) => {
-      const a = document.createElement("a");
-      a.className = "card";
-      a.href = item.url;
-      a.target = "_blank";
-      a.rel = "noopener noreferrer";
-      a.innerHTML = `
-        <span class="ico" style="background:${hexToRgba(item.color, .12)};color:${item.color}">${escapeHtml(item.icon || "🔗")}</span>
-        <span class="txt">
-          <span class="name">${escapeHtml(item.name)}</span>
-          <span class="desc">${escapeHtml(item.desc || "")}</span>
-        </span>
-        <button class="del" data-g="${gi}" data-i="${ii}" title="删除">×</button>`;
-      if (editing) a.addEventListener("click", e => e.preventDefault());
-      grid.appendChild(a);
-      total++;
+  /* ---------- 计算 ---------- */
+  function statOf(it) {
+    var price = num(it.price), prev = num(it.prevClose), qty = num(it.qty), cost = num(it.cost);
+    var hasQty = qty > 0;
+    var chg = (prev > 0 && price > 0) ? price - prev : NaN;
+    var chgPct = (prev > 0 && price > 0) ? (price - prev) / prev * 100 : NaN;
+    var mv = hasQty ? price * qty : 0;
+    var costAmt = hasQty ? cost * qty : 0;
+    var pnl = hasQty ? (price - cost) * qty : 0;
+    var pnlPct = (hasQty && cost > 0) ? (price - cost) / cost * 100 : NaN;
+    var todayPnl = (hasQty && isFinite(chg)) ? chg * qty : 0;
+    return { chg: chg, chgPct: chgPct, mv: mv, costAmt: costAmt, pnl: pnl, pnlPct: pnlPct, todayPnl: todayPnl, hasQty: hasQty };
+  }
+  function totals() {
+    var mv = 0, costAmt = 0, pnl = 0, today = 0, count = 0;
+    state.items.forEach(function (it) {
+      var s = statOf(it);
+      if (s.hasQty) count++;
+      mv += s.mv; costAmt += s.costAmt; pnl += s.pnl; today += s.todayPnl;
     });
+    return {
+      mv: mv, costAmt: costAmt, pnl: pnl, today: today, count: count,
+      pnlPct: costAmt > 0 ? pnl / costAmt * 100 : NaN,
+      todayPct: (mv - today) > 0 ? today / (mv - today) * 100 : NaN
+    };
+  }
 
-    if (editing) {
-      const add = document.createElement("button");
-      add.className = "add-card";
-      add.textContent = "＋ 添加";
-      add.addEventListener("click", () => openModal(gi));
-      grid.appendChild(add);
+  /* ---------- 渲染 ---------- */
+  function render() {
+    renderSummary();
+    renderTable();
+    renderDonut();
+    renderRank();
+  }
+
+  function renderSummary() {
+    var t = totals();
+    var eMv = $('sMv'), ePnl = $('sPnl'), eToday = $('sToday'), eCost = $('sCost');
+    eMv.textContent = fmtMoney(t.mv);
+    eMv.className = 'value';
+    eCost.textContent = fmtMoney(t.costAmt);
+    $('sMvHint').textContent = '持仓 ' + t.count + ' 只 / 自选 ' + state.items.length + ' 只';
+
+    ePnl.textContent = (t.pnl > 0 ? '+' : '') + fmtMoney(t.pnl);
+    ePnl.className = 'value ' + cls(t.pnl);
+    $('sPnlPct').textContent = isFinite(t.pnlPct) ? fmtPct(t.pnlPct) : '—';
+    $('sPnlPct').className = 'hint ' + cls(t.pnl);
+
+    eToday.textContent = (t.today > 0 ? '+' : '') + fmtMoney(t.today);
+    eToday.className = 'value ' + cls(t.today);
+    $('sTodayPct').textContent = isFinite(t.todayPct) ? fmtPct(t.todayPct) : '—';
+    $('sTodayPct').className = 'hint ' + cls(t.today);
+  }
+
+  function renderTable() {
+    var tb = $('tbody');
+    if (!state.items.length) {
+      tb.innerHTML = '<tr><td colspan="9"><div class="empty"><div class="big">📋</div>还没有自选股，点右上角「添加股票」开始吧</div></td></tr>';
+      return;
+    }
+    var html = '';
+    state.items.forEach(function (it) {
+      var s = statOf(it);
+      html += '<tr data-code="' + it.code + '">' +
+        '<td class="name-cell"><div class="nm">' + esc(it.name || it.code) + '</div><div class="cd">' + it.code + '</div></td>' +
+        '<td class="' + (isFinite(s.chg) ? cls(s.chg) : 'flat') + '">' + (num(it.price) > 0 ? fmtNum(it.price, 2) : '—') + '</td>' +
+        '<td><span class="pill ' + (isFinite(s.chgPct) ? cls(s.chgPct) : 'flat') + '">' + (isFinite(s.chgPct) ? fmtPct(s.chgPct) : '—') + '</span></td>' +
+        '<td>' + (s.hasQty ? fmtNum(num(it.qty), 0) : '—') + '</td>' +
+        '<td>' + (num(it.cost) > 0 ? fmtNum(it.cost, 2) : '—') + '</td>' +
+        '<td>' + (s.hasQty ? fmtNum(s.mv, 2) : '—') + '</td>' +
+        '<td class="' + (s.hasQty ? cls(s.pnl) : 'flat') + '">' + (s.hasQty ? (s.pnl > 0 ? '+' : '') + fmtNum(s.pnl, 0) : '—') + '</td>' +
+        '<td class="' + (isFinite(s.pnlPct) ? cls(s.pnlPct) : 'flat') + '">' + (isFinite(s.pnlPct) ? fmtPct(s.pnlPct) : '—') + '</td>' +
+        '<td class="row-actions"><button class="del" data-del="' + it.code + '">删</button></td>' +
+        '</tr>';
+    });
+    tb.innerHTML = html;
+  }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function renderDonut() {
+    var svg = $('donut');
+    var legend = $('legend');
+    var rows = state.items.map(function (it) {
+      var s = statOf(it);
+      return { name: it.name || it.code, mv: s.mv };
+    }).filter(function (r) { return r.mv > 0; }).sort(function (a, b) { return b.mv - a.mv; });
+
+    if (!rows.length) {
+      svg.innerHTML = '<circle cx="80" cy="80" r="58" fill="none" stroke="var(--border)" stroke-width="16"></circle>' +
+        '<text x="80" y="84" text-anchor="middle" class="donut-center">无持仓</text>';
+      legend.innerHTML = '<div class="legend-row"><span class="lg-name" style="color:var(--text-3)">填写持仓数量和成本后显示</span></div>';
+      return;
     }
 
-    sec.appendChild(grid);
-    app.appendChild(sec);
+    var top = rows.slice(0, 5);
+    var rest = rows.slice(5).reduce(function (a, b) { return a + b.mv; }, 0);
+    var slices = top.slice();
+    if (rest > 0) slices.push({ name: '其他', mv: rest, other: true });
+
+    var total = slices.reduce(function (a, b) { return a + b.mv; }, 0);
+    var R = 58, C = 2 * Math.PI * R, offset = 0, out = '';
+    slices.forEach(function (sl, i) {
+      var frac = sl.mv / total;
+      var len = frac * C;
+      var color = sl.other ? '#b8c0cc' : COLORS[i % COLORS.length];
+      out += '<circle cx="80" cy="80" r="' + R + '" fill="none" stroke="' + color + '" stroke-width="16" ' +
+        'stroke-dasharray="' + len.toFixed(2) + ' ' + (C - len).toFixed(2) + '" ' +
+        'stroke-dashoffset="' + (-offset).toFixed(2) + '" transform="rotate(-90 80 80)" ' +
+        'stroke-linecap="butt"></circle>';
+      offset += len;
+    });
+    out += '<text x="80" y="76" text-anchor="middle" class="donut-center">总市值</text>' +
+      '<text x="80" y="96" text-anchor="middle" style="font-size:14px;font-weight:620;fill:var(--text)">' +
+      (total >= 10000 ? (total / 10000).toFixed(1) + '万' : total.toFixed(0)) + '</text>';
+    svg.innerHTML = out;
+
+    legend.innerHTML = slices.map(function (sl, i) {
+      var color = sl.other ? '#b8c0cc' : COLORS[i % COLORS.length];
+      return '<div class="legend-row"><span class="dot" style="background:' + color + '"></span>' +
+        '<span class="lg-name">' + esc(sl.name) + '</span>' +
+        '<span class="lg-pct">' + (sl.mv / total * 100).toFixed(1) + '%</span></div>';
+    }).join('');
+  }
+
+  function renderRank() {
+    var box = $('rank');
+    var rows = state.items.map(function (it) {
+      var s = statOf(it);
+      return { name: it.name || it.code, pct: s.chgPct, hasQty: s.hasQty, mv: s.mv };
+    }).filter(function (r) { return isFinite(r.pct); })
+      .sort(function (a, b) { return b.pct - a.pct; });
+
+    if (!rows.length) {
+      box.innerHTML = '<div style="padding:16px;color:var(--text-3);font-size:12.5px">填入现价和昨收后显示</div>';
+      return;
+    }
+    var maxAbs = Math.max.apply(null, rows.map(function (r) { return Math.abs(r.pct); }).concat([1]));
+    box.innerHTML = rows.map(function (r) {
+      var w = Math.max(4, Math.abs(r.pct) / maxAbs * 100);
+      var color = r.pct > 0 ? 'var(--up)' : (r.pct < 0 ? 'var(--down)' : 'var(--flat)');
+      return '<div class="rank-row">' +
+        '<span class="rk-name">' + esc(r.name) + '</span>' +
+        '<span class="rank-bar"><i style="width:' + w.toFixed(1) + '%;background:' + color + '"></i></span>' +
+        '<span class="rk-val" style="color:' + color + '">' + fmtPct(r.pct) + '</span>' +
+        '</div>';
+    }).join('');
+  }
+
+  /* ---------- 主题 ---------- */
+  function applyTheme() {
+    document.documentElement.setAttribute('data-theme', state.theme);
+    $('btnTheme').textContent = state.theme === 'dark' ? '☀️' : '🌙';
+    render();
+  }
+
+  /* ---------- 弹窗 ---------- */
+  function openDialog(item) {
+    editingCode = item ? item.code : null;
+    $('dlgTitle').textContent = item ? '编辑 · ' + (item.name || item.code) : '添加股票';
+    $('fCode').value = item ? item.code : '';
+    $('fCode').disabled = !!item;
+    $('fName').value = item ? (item.name || '') : '';
+    $('fPrice').value = item && num(item.price) ? item.price : '';
+    $('fPrev').value = item && num(item.prevClose) ? item.prevClose : '';
+    $('fCost').value = item && num(item.cost) ? item.cost : '';
+    $('fQty').value = item && num(item.qty) ? item.qty : '';
+    $('delWrap').style.display = item ? 'block' : 'none';
+    $('dlg').showModal();
+    setTimeout(function () { ($('fName').value ? $('fPrice') : $('fName')).focus(); }, 30);
+  }
+
+  function submitDialog(e) {
+    e.preventDefault();
+    var code = ($('fCode').value || '').trim();
+    if (!/^\d{6}$/.test(code)) { toast('股票代码需要 6 位数字'); return; }
+    var payload = {
+      code: code,
+      name: ($('fName').value || '').trim() || code,
+      price: num($('fPrice').value),
+      prevClose: num($('fPrev').value),
+      cost: num($('fCost').value),
+      qty: num($('fQty').value)
+    };
+    if (editingCode) {
+      for (var i = 0; i < state.items.length; i++) {
+        if (state.items[i].code === editingCode) {
+          payload.name = ($('fName').value || '').trim() || state.items[i].name;
+          state.items[i] = payload;
+          break;
+        }
+      }
+    } else {
+      var exist = state.items.some(function (it) { return it.code === code; });
+      if (exist) { toast('这只股票已在自选里了'); return; }
+      state.items.push(payload);
+    }
+    save(); render(); $('dlg').close();
+    toast(editingCode ? '已更新' : '已添加');
+  }
+
+  /* ---------- 事件 ---------- */
+  $('btnAdd').addEventListener('click', function () { openDialog(null); });
+  $('btnCancel').addEventListener('click', function () { $('dlg').close(); });
+  $('dlgForm').addEventListener('submit', submitDialog);
+  $('btnTheme').addEventListener('click', function () {
+    state.theme = state.theme === 'dark' ? 'light' : 'dark';
+    save(); applyTheme();
   });
 
-  document.getElementById("stat").textContent = `${data.length} 个分组 · ${total} 个快捷方式`;
-  bindDelete();
-}
-
-function bindDelete() {
-  document.querySelectorAll(".del").forEach(btn => {
-    btn.addEventListener("click", e => {
-      e.preventDefault();
+  $('tbody').addEventListener('click', function (e) {
+    var delBtn = e.target.closest('[data-del]');
+    if (delBtn) {
       e.stopPropagation();
-      const g = +btn.dataset.g, i = +btn.dataset.i;
-      const item = data[g].items[i];
-      if (!confirm(`删除「${item.name}」？`)) return;
-      data[g].items.splice(i, 1);
-      saveData();
-      render();
+      var code = delBtn.getAttribute('data-del');
+      var it = state.items.filter(function (x) { return x.code === code; })[0];
+      if (it && confirm('确定从自选中删除「' + (it.name || it.code) + '」？')) {
+        state.items = state.items.filter(function (x) { return x.code !== code; });
+        save(); render(); toast('已删除');
+      }
+      return;
+    }
+    var tr = e.target.closest('tr[data-code]');
+    if (tr) {
+      var c = tr.getAttribute('data-code');
+      var item = state.items.filter(function (x) { return x.code === c; })[0];
+      if (item) openDialog(item);
+    }
+  });
+
+  $('btnDeleteRow').addEventListener('click', function () {
+    if (!editingCode) return;
+    var it = state.items.filter(function (x) { return x.code === editingCode; })[0];
+    if (confirm('确定删除「' + ((it && it.name) || editingCode) + '」？')) {
+      state.items = state.items.filter(function (x) { return x.code !== editingCode; });
+      save(); render(); $('dlg').close(); toast('已删除');
+    }
+  });
+
+  /* ---------- 行情：东方财富 JSONP ---------- */
+  function secid(code) {
+    if (/^(6|5|9)/.test(code)) return '1.' + code;
+    return '0.' + code;
+  }
+
+  var jsonpSeq = 0;
+  function jsonp(url, timeoutMs) {
+    return new Promise(function (resolve, reject) {
+      var cbName = '__em_cb_' + (++jsonpSeq) + '_' + Date.now();
+      var script = document.createElement('script');
+      var done = false;
+      var timer = setTimeout(function () { finish(new Error('超时')); }, timeoutMs || 9000);
+
+      function finish(err, data) {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        try { delete window[cbName]; } catch (e) { window[cbName] = undefined; }
+        if (script.parentNode) script.parentNode.removeChild(script);
+        err ? reject(err) : resolve(data);
+      }
+      window[cbName] = function (data) { finish(null, data); };
+      script.onerror = function () { finish(new Error('网络错误')); };
+      script.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'cb=' + cbName;
+      document.body.appendChild(script);
+    });
+  }
+
+  $('btnRefresh').addEventListener('click', function () {
+    var codes = state.items.map(function (it) { return it.code; }).filter(function (c) { return /^\d{6}$/.test(c); });
+    if (!codes.length) { toast('还没有可刷新的股票代码'); return; }
+    var btn = $('btnRefresh');
+    btn.disabled = true;
+    var old = btn.innerHTML;
+    btn.innerHTML = '⏳ <span class="tx">拉取中…</span>';
+
+    var url = 'https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&invt=2&fields=f2,f3,f4,f12,f13,f14&secids=' +
+      codes.map(secid).join(',');
+
+    jsonp(url, 9000).then(function (res) {
+      var diff = res && res.data && res.data.diff;
+      if (!diff) throw new Error('无数据');
+      var list = Array.isArray(diff) ? diff : Object.keys(diff).map(function (k) { return diff[k]; });
+      var map = {};
+      list.forEach(function (d) {
+        var c = String(d.f12 || '').padStart(6, '0');
+        if (d.f2 != null && d.f2 !== '-') map[c] = { price: num(d.f2), chg: num(d.f4), name: d.f14 };
+      });
+      var hit = 0;
+      state.items.forEach(function (it) {
+        var q = map[it.code];
+        if (!q) return;
+        it.price = q.price;
+        if (isFinite(q.chg)) it.prevClose = +(q.price - q.chg).toFixed(3);
+        if ((!it.name || it.name === it.code) && q.name) it.name = q.name;
+        hit++;
+      });
+      if (!hit) throw new Error('未匹配到行情');
+      state.lastRefresh = new Date().toISOString();
+      save(); render(); updateRefreshLabel();
+      toast('已更新 ' + hit + ' 只股票的行情');
+    }).catch(function () {
+      toast('行情接口没连上（网络或跨域限制），可点任意行手动填价格');
+    }).then(function () {
+      btn.disabled = false;
+      btn.innerHTML = old;
     });
   });
-}
 
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-}
-
-/* ============ 时钟 ============ */
-function tick() {
-  const now = new Date();
-  const week = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"][now.getDay()];
-  const pad = n => String(n).padStart(2, "0");
-  const hour = now.getHours();
-  const greet = hour < 6 ? "夜深了" : hour < 11 ? "早上好" : hour < 14 ? "中午好" : hour < 18 ? "下午好" : "晚上好";
-  document.getElementById("clock").textContent =
-    `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 ${week} ${pad(hour)}:${pad(now.getMinutes())}:${pad(now.getSeconds())} · ${greet}`;
-  const h1 = document.querySelector(".greet h1 .hi");
-  if (h1) h1.textContent = greet;
-}
-setInterval(tick, 1000);
-
-/* ============ 搜索 ============ */
-document.getElementById("searchForm").addEventListener("submit", e => {
-  e.preventDefault();
-  const q = document.getElementById("q").value.trim();
-  if (!q) return;
-  if (/^(https?:\/\/)?[\w-]+(\.[\w-]+)+(\/\S*)?$/.test(q) && q.includes(".")) {
-    window.open(q.startsWith("http") ? q : "https://" + q, "_blank");
-    return;
+  function updateRefreshLabel() {
+    var el = $('lastRefresh');
+    if (!state.lastRefresh) { el.textContent = '尚未拉取行情'; return; }
+    var d = new Date(state.lastRefresh);
+    el.textContent = '行情更新于 ' + d.toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
   }
-  window.open(document.getElementById("engine").value + encodeURIComponent(q), "_blank");
-});
 
-/* ============ 主题 ============ */
-function applyTheme(t) {
-  document.documentElement.setAttribute("data-theme", t);
-  document.getElementById("themeBtn").textContent = t === "dark" ? "☀️" : "🌙";
-  localStorage.setItem(THEME_KEY, t);
-}
-document.getElementById("themeBtn").addEventListener("click", () => {
-  applyTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark");
-});
+  /* ---------- 导入导出 ---------- */
+  $('btnExport').addEventListener('click', function () {
+    var blob = new Blob([JSON.stringify({ items: state.items, exportedAt: new Date().toISOString() }, null, 2)], { type: 'application/json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'astock-board-' + new Date().toISOString().slice(0, 10) + '.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+    toast('已导出备份文件');
+  });
 
-/* ============ 编辑模式 ============ */
-document.getElementById("editBtn").addEventListener("click", () => {
-  editing = !editing;
-  document.body.classList.toggle("editing", editing);
-  document.getElementById("editBtn").classList.toggle("on", editing);
-  render();
-});
+  $('btnImport').addEventListener('click', function () { $('fileInput').click(); });
 
-/* ============ 弹窗 ============ */
-const modal = document.getElementById("modal");
-let addGroupIndex = 0;
+  $('fileInput').addEventListener('change', function (e) {
+    var f = e.target.files && e.target.files[0];
+    if (!f) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var d = JSON.parse(reader.result);
+        var items = Array.isArray(d) ? d : d.items;
+        if (!Array.isArray(items)) throw new Error('格式不对');
+        items = items.filter(function (it) { return it && /^\d{6}$/.test(String(it.code)); }).map(function (it) {
+          return {
+            code: String(it.code), name: it.name || String(it.code),
+            price: num(it.price), prevClose: num(it.prevClose), cost: num(it.cost), qty: num(it.qty)
+          };
+        });
+        if (!items.length) throw new Error('没有有效数据');
+        if (!confirm('导入 ' + items.length + ' 只股票，将覆盖当前自选列表，确定？')) return;
+        state.items = items;
+        save(); render(); toast('已导入 ' + items.length + ' 只');
+      } catch (err) {
+        toast('导入失败：文件格式不正确');
+      }
+    };
+    reader.readAsText(f);
+    e.target.value = '';
+  });
 
-function openModal(groupIndex) {
-  addGroupIndex = groupIndex;
-  document.getElementById("fName").value = "";
-  document.getElementById("fUrl").value = "";
-  document.getElementById("fIcon").value = "";
-  const sel = document.getElementById("fGroup");
-  sel.innerHTML = data.map((g, i) => `<option value="${i}" ${i === groupIndex ? "selected" : ""}>${escapeHtml(g.name)}</option>`).join("");
-  modal.classList.add("show");
-  setTimeout(() => document.getElementById("fName").focus(), 60);
-}
-function closeModal() { modal.classList.remove("show"); }
-
-document.getElementById("cancelBtn").addEventListener("click", closeModal);
-modal.addEventListener("click", e => { if (e.target === modal) closeModal(); });
-
-document.getElementById("saveBtn").addEventListener("click", () => {
-  const name = document.getElementById("fName").value.trim();
-  let url = document.getElementById("fUrl").value.trim();
-  const icon = document.getElementById("fIcon").value.trim() || "📌";
-  const gi = +document.getElementById("fGroup").value;
-  if (!name) return alert("请填写名称");
-  if (!url) return alert("请填写网址");
-  if (!/^https?:\/\//i.test(url)) url = "https://" + url;
-  data[gi].items.push({ name, url, icon, desc: "", color: "#2f6bff" });
-  saveData();
-  closeModal();
-  render();
-});
-
-/* 回车快捷提交 */
-modal.addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("saveBtn").click(); if (e.key === "Escape") closeModal(); });
-
-/* ============ 初始化 ============ */
-applyTheme(localStorage.getItem(THEME_KEY) ||
-  (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
-render();
-tick();
+  /* ---------- 启动 ---------- */
+  load();
+  applyTheme();
+  updateRefreshLabel();
+})();
 </script>
 </body>
 </html>
